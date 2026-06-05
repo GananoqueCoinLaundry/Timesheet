@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Employee Timesheet</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        button { background: #28a745; color: white; border: none; margin-top: 20px; cursor: pointer; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Log Hours</h2>
+    <form id="timesheetForm">
+        <label>Task</label>
+        <select id="task" required>
+            <option value="">Select Task...</option>
+            <option value="Project A">Project A</option>
+            <option value="Admin">Admin</option>
+            <option value="Maintenance">Maintenance</option>
+        </select>
+
+        <label>Start Time</label>
+        <!-- Standard time input provides the "scrolling wheel" on mobile -->
+        <input type="time" id="startTime" required>
+
+        <label>Finish Time</label>
+        <input type="time" id="endTime" required>
+
+        <button type="submit" id="submitBtn">Submit Hours</button>
+    </form>
+</div>
+
+<script>
+    const YOUR_APPS_SCRIPT_URL_HERE with your actual URL:
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw1LPURmrTG_IVwZtV_sr69oQI0BNEIT5xazgO43tLpscJkY3da5CupQ2JeyahvwQ-RtA/exec";
+    document.getElementById('timesheetForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "Saving...";
+
+        const payload = {
+            task: document.getElementById('task').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value
+        };
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Needed for Google Apps Script
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert("Hours logged successfully!");
+            document.getElementById('timesheetForm').reset();
+            btn.disabled = false;
+            btn.innerText = "Submit Hours";
+        }).catch(err => {
+            alert("Error saving data.");
+            btn.disabled = false;
+        });
+    });
+</script>
+
+</body>
+</html>
