@@ -10,7 +10,7 @@
         select, input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         button { background: #28a745; color: white; border: none; margin-top: 20px; cursor: pointer; }
         button:disabled { background: #ccc; }
-        #otherTaskContainer { display: none; margin-top: 10px; } /* Hidden by default */
+        .hidden-input { display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -18,8 +18,23 @@
 <div class="container">
     <h2>Log Hours</h2>
     <form id="timesheetForm">
+        
+        <!-- SECTION 1: EMPLOYEE NAME -->
+        <label>Employee Name</label>
+        <select id="employee" required onchange="toggleInputs()">
+            <option value="">Select Name...</option>
+            <option value="Mickey">Mickey</option>
+            <option value="Heidi">Heidi</option>
+            <option value="Other">Other</option>
+        </select>
+        <div id="otherEmployeeContainer" class="hidden-input">
+            <label>Type Your Name:</label>
+            <input type="text" id="otherEmployeeDetail" placeholder="Your name">
+        </div>
+
+        <!-- SECTION 2: TASK -->
         <label>Task</label>
-        <select id="task" required onchange="toggleOtherInput()">
+        <select id="task" required onchange="toggleInputs()">
             <option value="">Select Task...</option>
             <option value="Clean">Clean</option>
             <option value="Wash & Fold">Wash & Fold</option>
@@ -27,13 +42,12 @@
             <option value="Customer Help">Customer Help</option>
             <option value="Other">Other</option>
         </select>
-
-        <!-- Hidden container for "Other" description -->
-        <div id="otherTaskContainer">
-            <label>Please specify:</label>
+        <div id="otherTaskContainer" class="hidden-input">
+            <label>Specify Task:</label>
             <input type="text" id="otherTaskDetail" placeholder="What did you do?">
         </div>
 
+        <!-- SECTION 3: TIME -->
         <label>Start Time</label>
         <input type="time" id="startTime" required>
 
@@ -45,42 +59,40 @@
 </div>
 
 <script>
-    // 1. PASTE YOUR URL BELOW
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw1LPURmrTG_IVwZtV_sr69oQI0BNEIT5xazgO43tLpscJkY3da5CupQ2JeyahvwQ-RtA/exec";
 
-    // Show/Hide the "Other" input box
-    function toggleOtherInput() {
-        const taskSelect = document.getElementById('task');
-        const otherContainer = document.getElementById('otherTaskContainer');
-        const otherInput = document.getElementById('otherTaskDetail');
+    function toggleInputs() {
+        // Handle Employee "Other"
+        const empSelect = document.getElementById('employee');
+        const empOtherContainer = document.getElementById('otherEmployeeContainer');
+        empOtherContainer.style.display = (empSelect.value === "Other") ? "block" : "none";
+        document.getElementById('otherEmployeeDetail').required = (empSelect.value === "Other");
 
-        if (taskSelect.value === "Other") {
-            otherContainer.style.display = "block";
-            otherInput.required = true;
-        } else {
-            otherContainer.style.display = "none";
-            otherInput.required = false;
-            otherInput.value = ""; // Clear it if they change their mind
-        }
+        // Handle Task "Other"
+        const taskSelect = document.getElementById('task');
+        const taskOtherContainer = document.getElementById('otherTaskContainer');
+        taskOtherContainer.style.display = (taskSelect.value === "Other") ? "block" : "none";
+        document.getElementById('otherTaskDetail').required = (taskSelect.value === "Other");
     }
 
     document.getElementById('timesheetForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
         
-        let finalTaskName = document.getElementById('task').value;
-        const otherDetail = document.getElementById('otherTaskDetail').value;
+        // Logic for Names
+        let finalName = document.getElementById('employee').value;
+        if (finalName === "Other") finalName = document.getElementById('otherEmployeeDetail').value;
 
-        // If "Other" was selected, combine the word "Other" with the details
-        if (finalTaskName === "Other" && otherDetail) {
-            finalTaskName = "Other: " + otherDetail;
-        }
+        // Logic for Tasks
+        let finalTask = document.getElementById('task').value;
+        if (finalTask === "Other") finalTask = "Other: " + document.getElementById('otherTaskDetail').value;
 
         btn.disabled = true;
         btn.innerText = "Saving...";
 
         const payload = {
-            task: finalTaskName,
+            employee: finalName,
+            task: finalTask,
             startTime: document.getElementById('startTime').value,
             endTime: document.getElementById('endTime').value
         };
@@ -94,7 +106,7 @@
         }).then(() => {
             alert("Hours logged successfully!");
             document.getElementById('timesheetForm').reset();
-            document.getElementById('otherTaskContainer').style.display = "none";
+            toggleInputs(); // Hide the "Other" boxes again
             btn.disabled = false;
             btn.innerText = "Submit Hours";
         }).catch(err => {
