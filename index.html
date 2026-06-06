@@ -10,6 +10,7 @@
         select, input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         button { background: #28a745; color: white; border: none; margin-top: 20px; cursor: pointer; }
         button:disabled { background: #ccc; }
+        #otherTaskContainer { display: none; margin-top: 10px; } /* Hidden by default */
     </style>
 </head>
 <body>
@@ -18,7 +19,7 @@
     <h2>Log Hours</h2>
     <form id="timesheetForm">
         <label>Task</label>
-        <select id="task" required>
+        <select id="task" required onchange="toggleOtherInput()">
             <option value="">Select Task...</option>
             <option value="Clean">Clean</option>
             <option value="Wash & Fold">Wash & Fold</option>
@@ -27,8 +28,13 @@
             <option value="Other">Other</option>
         </select>
 
+        <!-- Hidden container for "Other" description -->
+        <div id="otherTaskContainer">
+            <label>Please specify:</label>
+            <input type="text" id="otherTaskDetail" placeholder="What did you do?">
+        </div>
+
         <label>Start Time</label>
-        <!-- Standard time input provides the "scrolling wheel" on mobile -->
         <input type="time" id="startTime" required>
 
         <label>Finish Time</label>
@@ -39,29 +45,56 @@
 </div>
 
 <script>
-    const YOUR_APPS_SCRIPT_URL_HERE with your actual URL:
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw1LPURmrTG_IVwZtV_sr69oQI0BNEIT5xazgO43tLpscJkY3da5CupQ2JeyahvwQ-RtA/exec";
+    // 1. PASTE YOUR URL BELOW
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw1LPURmrTG_IVwZtV_sr69oQI0BNEIT5xazgO43tLpscJkY3da5CupQ2JeyahvwQ-RtA/exec";
+
+    // Show/Hide the "Other" input box
+    function toggleOtherInput() {
+        const taskSelect = document.getElementById('task');
+        const otherContainer = document.getElementById('otherTaskContainer');
+        const otherInput = document.getElementById('otherTaskDetail');
+
+        if (taskSelect.value === "Other") {
+            otherContainer.style.display = "block";
+            otherInput.required = true;
+        } else {
+            otherContainer.style.display = "none";
+            otherInput.required = false;
+            otherInput.value = ""; // Clear it if they change their mind
+        }
+    }
+
     document.getElementById('timesheetForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
+        
+        let finalTaskName = document.getElementById('task').value;
+        const otherDetail = document.getElementById('otherTaskDetail').value;
+
+        // If "Other" was selected, combine the word "Other" with the details
+        if (finalTaskName === "Other" && otherDetail) {
+            finalTaskName = "Other: " + otherDetail;
+        }
+
         btn.disabled = true;
         btn.innerText = "Saving...";
 
         const payload = {
-            task: document.getElementById('task').value,
+            task: finalTaskName,
             startTime: document.getElementById('startTime').value,
             endTime: document.getElementById('endTime').value
         };
 
         fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors', // Needed for Google Apps Script
+            mode: 'no-cors',
             cache: 'no-cache',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
             alert("Hours logged successfully!");
             document.getElementById('timesheetForm').reset();
+            document.getElementById('otherTaskContainer').style.display = "none";
             btn.disabled = false;
             btn.innerText = "Submit Hours";
         }).catch(err => {
